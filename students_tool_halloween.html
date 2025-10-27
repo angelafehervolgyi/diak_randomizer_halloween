@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8">
+  <title>Diáksorsoló Halloween Edition</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      max-width: 540px;
+      margin: 30px auto;
+      background: url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80') no-repeat center center fixed;
+      background-size: cover;
+      padding: 22px;
+      border-radius: 14px;
+      box-shadow: 0 0 40px #0007;
+      color: #fff;
+      position: relative;
+      min-height: 98vh;
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(24,0,33,0.68);
+      z-index: -1;
+    }
+    h1 {
+      text-align: center;
+      font-family: 'Creepster', cursive, sans-serif;
+      font-size: 2.3em;
+      color: #ff8000;
+      text-shadow: 2px 3px 7px #000;
+      letter-spacing: 2px;
+      margin-bottom: 10px;
+    }
+    textarea {
+      width: 100%;
+      height: 90px;
+      margin-bottom: 10px;
+      border-radius: 7px;
+      border: 1px solid #ff8000;
+      background: #221018cc;
+      color: #fff;
+      font-size: 1em;
+      padding: 8px;
+    }
+    button {
+      margin: 5px 2px;
+      padding: 7px 18px;
+      background: linear-gradient(90deg,#ff8000 40%,#b43510 100%);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-weight: bold;
+      text-shadow: 1px 2px 5px #000;
+      box-shadow: 0 0 8px #ff8000ad;
+      cursor: pointer;
+      transition: filter 0.2s;
+    }
+    button:hover {
+      filter: brightness(1.2);
+    }
+    .result {
+      background: #2d1a2dcc;
+      border: 1px solid #ff8000;
+      border-radius: 8px;
+      padding: 10px;
+      margin: 10px 0;
+      color: #ffe4b5;
+      box-shadow: 0 0 20px #ff8000ad;
+      font-size: 1.07em;
+    }
+    label { font-weight: bold; }
+    input[type=number] {
+      width: 52px;
+      border-radius: 5px;
+      border: 1px solid #ff8000;
+      background: #221018cc;
+      color: #fff;
+      padding: 3px;
+      font-size: 1em;
+    }
+    .group-list { margin: 4px 0 10px 0; }
+    .group-list li { margin-left: 16px; }
+    .pumpkin {
+      position: absolute;
+      right: -45px; top: 18px;
+      width: 94px; height: 94px;
+      background: url('https://pngimg.com/d/pumpkin_PNG4690.png') no-repeat center center;
+      background-size: contain;
+      pointer-events: none;
+      opacity: 0.8;
+    }
+    .bat {
+      position: absolute;
+      left: -60px; top: 8px;
+      width: 100px; height: 60px;
+      background: url('https://pngimg.com/d/bat_PNG18.png') no-repeat center center;
+      background-size: contain;
+      pointer-events: none;
+      opacity: 0.6;
+    }
+    @import url('https://fonts.googleapis.com/css2?family=Creepster&display=swap');
+    ::selection { background: #ff800085; color: #fff; }
+    @media(max-width:600px){ body{max-width:99vw; padding:5vw;} .pumpkin,.bat{display:none;} }
+  </style>
+</head>
+<body>
+  <div class="pumpkin"></div>
+  <div class="bat"></div>
+  <h1>Diáksorsoló 🎃</h1>
+  <label for="students">Diákok (minden név külön sorba):</label>
+  <textarea id="students" placeholder="pl.&#10;Kovács Anna&#10;Tóth Béla&#10;Szabó Csilla"></textarea>
+  <br>
+  <button onclick="randomOrder()">Véletlen sorrend</button>
+  <button onclick="pickRandom()">Egy diák kisorsolása</button>
+  <label style="margin-left:10px;">Csoportok száma: <input type="number" id="groupCount" min="2" max="99" value="2"></label>
+  <button onclick="splitGroups()">Csoportbontás</button>
+  <div id="result" class="result"></div>
+  <script>
+    function getStudents() {
+      return document.getElementById('students').value
+        .split('\n')
+        .map(s => s.trim())
+        .filter(s => s.length > 0);
+    }
+    function shuffle(arr) {
+      for(let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i+1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+    function randomOrder() {
+      const students = getStudents();
+      if(students.length < 2) {
+        showResult("Adj meg legalább két diákot!");
+        return;
+      }
+      const shuffled = shuffle([...students]);
+      showResult("<b>Véletlen sorrend:</b><br><ol class='group-list'>" +
+        shuffled.map(name => `<li>${escapeHtml(name)}</li>`).join('') +
+        "</ol>");
+    }
+    function pickRandom() {
+      const students = getStudents();
+      if(students.length === 0) {
+        showResult("Nincs diák megadva!");
+        return;
+      }
+      const idx = Math.floor(Math.random() * students.length);
+      showResult("<b>Kisorsolt diák:</b> " + `<span style="font-size:1.2em;color:#ff8000;">${escapeHtml(students[idx])}</span>`);
+    }
+    function splitGroups() {
+      const students = getStudents();
+      const groupCount = parseInt(document.getElementById('groupCount').value, 10);
+      if(students.length < groupCount || groupCount < 2) {
+        showResult("Adj meg legalább annyi diákot, mint a csoportok száma, és minimum 2 csoportot!");
+        return;
+      }
+      const shuffled = shuffle([...students]);
+      const groups = Array.from({length: groupCount}, () => []);
+      shuffled.forEach((student, i) => {
+        groups[i % groupCount].push(student);
+      });
+      let html = "<b>Csoportok:</b><br>";
+      for(let i=0; i<groups.length; i++) {
+        html += `<div><b style="color:#ff8000;">${i+1}. csoport</b><ul class='group-list'>` +
+          groups[i].map(name => `<li>${escapeHtml(name)}</li>`).join('') +
+          "</ul></div>";
+      }
+      showResult(html);
+    }
+    function showResult(html) {
+      document.getElementById('result').innerHTML = html;
+    }
+    function escapeHtml(str) {
+      return str.replace(/[&<>"']/g, function (m) {
+        return ({
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#39;'
+        })[m];
+      });
+    }
+  </script>
+</body>
+</html>
